@@ -1,23 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MedicineCard from "./components/MedicineCard";
 import AddMedicineForm from "./components/AddMedicineForm";
 
 function App() {
 
-  // Main medicines state - single source of truth
   const [medicines, setMedicines] = useState([]);
 
-  // Add a new medicine to state
+  // useEffect 1 — runs ONCE when app first loads
+  // Reads saved medicines from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("medicines");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0) {
+        setMedicines(parsed);
+      }
+    }
+  }, []);
+
+  // useEffect 2 — runs every time medicines changes
+  // Only saves when medicines has items — prevents overwriting on first load
+  useEffect(() => {
+    if (medicines.length > 0) {
+      localStorage.setItem("medicines", JSON.stringify(medicines));
+    }
+  }, [medicines]);
+
+  // Add a new medicine
   function handleAdd(newMedicine) {
     setMedicines([...medicines, newMedicine]);
   }
 
-  // Delete a medicine from state by id
+  // Delete a medicine by id
   function handleDelete(id) {
-    setMedicines(medicines.filter((m) => m.id !== id));
+    const updated = medicines.filter((m) => m.id !== id);
+    if (updated.length === 0) {
+      localStorage.removeItem("medicines");
+    }
+    setMedicines(updated);
   }
 
-  // Count medicines by status for dashboard
+  // Dashboard counts
   const safeCount = medicines.filter((m) => m.status === "safe").length;
   const expiringCount = medicines.filter((m) => m.status === "expiring").length;
   const expiredCount = medicines.filter((m) => m.status === "expired").length;
@@ -33,15 +56,21 @@ function App() {
       <div style={{ display: "flex", gap: "12px", marginBottom: "2rem" }}>
         <div style={dashCardStyle}>
           <p style={{ fontSize: "13px", color: "#777" }}>Safe</p>
-          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#155724" }}>{safeCount}</p>
+          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#155724" }}>
+            {safeCount}
+          </p>
         </div>
         <div style={dashCardStyle}>
           <p style={{ fontSize: "13px", color: "#777" }}>Expiring Soon</p>
-          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#856404" }}>{expiringCount}</p>
+          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#856404" }}>
+            {expiringCount}
+          </p>
         </div>
         <div style={dashCardStyle}>
           <p style={{ fontSize: "13px", color: "#777" }}>Expired</p>
-          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#721c24" }}>{expiredCount}</p>
+          <p style={{ fontSize: "28px", fontWeight: "bold", color: "#721c24" }}>
+            {expiredCount}
+          </p>
         </div>
       </div>
 
