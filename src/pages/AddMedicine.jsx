@@ -5,8 +5,8 @@ function AddMedicine({ onAdd }) {
 
   const navigate = useNavigate();
 
-  function handleAdd(medicine) {
-    onAdd(medicine);
+  async function handleAdd(medicine) {
+    await onAdd(medicine);
     navigate("/inventory");
   }
 

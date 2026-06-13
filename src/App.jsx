@@ -5,36 +5,67 @@ import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import AddMedicine from "./pages/AddMedicine";
 
+// Base URL of our backend API
+const API_URL = "http://localhost:5000/api/medicines";
+
 function App() {
 
   const [medicines, setMedicines] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  // Load medicines from backend when app starts
   useEffect(() => {
-    const saved = localStorage.getItem("medicines");
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0) {
-        setMedicines(parsed);
-      }
-    }
+    fetchMedicines();
   }, []);
 
-  useEffect(() => {
-    if (medicines.length > 0) {
-      localStorage.setItem("medicines", JSON.stringify(medicines));
+  // GET request - fetch all medicines
+  async function fetchMedicines() {
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      setMedicines(data);
+    } catch (error) {
+      console.error("Error fetching medicines:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [medicines]);
-
-  function handleAdd(newMedicine) {
-    setMedicines([...medicines, newMedicine]);
   }
 
-  function handleDelete(id) {
-    const updated = medicines.filter((m) => m.id !== id);
-    if (updated.length === 0) {
-      localStorage.removeItem("medicines");
+  // POST request - add a new medicine
+  async function handleAdd(newMedicine) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(newMedicine)
+      });
+      const data = await res.json();
+
+      // Add the medicine returned from backend (has real id) to state
+      setMedicines([...medicines, data]);
+    } catch (error) {
+      console.error("Error adding medicine:", error);
     }
-    setMedicines(updated);
+  }
+
+  // DELETE request - remove a medicine by id
+  async function handleDelete(id) {
+    try {
+      await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
+      });
+
+      // Remove from local state too
+      setMedicines(medicines.filter((m) => m.id !== id));
+    } catch (error) {
+      console.error("Error deleting medicine:", error);
+    }
+  }
+
+  if (loading) {
+    return <p style={{ textAlign: "center", padding: "3rem" }}>Loading medicines...</p>;
   }
 
   return (
